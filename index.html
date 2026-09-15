@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DailyCrypto - Earn DCX Monthly</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+  body { background:linear-gradient(180deg, #050A09 0%, #0A1511 100%); color:#fff; min-height:100vh; padding:20px; }
+  .container { max-width:480px; margin:0 auto; }
+  
+  .header { text-align:center; margin-bottom:25px; }
+  .logo { font-size:32px; font-weight:800; background:linear-gradient(90deg,#00ff88,#00d4ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .subtitle { font-size:13px; color:#8A9A95; margin-top:5px; }
+
+  .card { background:rgba(18,26,22,0.6); backdrop-filter:blur(10px); border:1px solid #1e2a24; border-radius:20px; padding:20px; margin-bottom:15px; }
+  
+  .balance-card { text-align:center; }
+  .balance-label { font-size:12px; color:#8A9A95; }
+  .balance { font-size:48px; font-weight:800; color:#00ff88; margin:5px 0; }
+  .stats { display:flex; justify-content:space-between; font-size:12px; color:#8A9A95; margin-top:10px; }
+
+  .btn { width:100%; padding:16px; background:linear-gradient(90deg,#00ff88,#00d4ff); color:#000; border:none; border-radius:14px; font-size:15px; font-weight:800; cursor:pointer; margin:8px 0; transition:0.2s; }
+  .btn:hover { transform:scale(1.02); }
+  .btn:disabled { background:#333; color:#777; }
+  .btn-outline { background:transparent; color:#00ff88; border:1px solid #00ff88; }
+
+  .ad-box { background:#0F1814; border:1px dashed #1e2a24; border-radius:16px; padding:10px; margin:15px 0; min-height:260px; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+  .ad-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+
+  .rules { font-size:11px; color:#8A9A95; line-height:1.6; }
+  .rules b { color:#00ff88; }
+  .wallet { font-size:11px; color:#8A9A95; text-align:center; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">DailyCrypto</div>
+    <div class="subtitle">Watch Ads. Earn DCX. Withdraw Monthly.</div>
+  </div>
+
+  <button class="btn btn-outline" id="connectBtn">Connect Wallet</button>
+  <p class="wallet" id="walletAddress"></p>
+
+  <div class="card balance-card">
+    <div class="balance-label">Your Balance</div>
+    <div class="balance" id="balance">0 DCX</div>
+    <div class="stats">
+      <span>Days: <b id="days" style="color:#fff">0/30</b></span>
+      <span>≈ $<span id="usd">0.00</span></span>
+    </div>
+  </div>
+
+  <!-- AD 1 -->
+  <div class="ad-box">
+    <div class="ad-label">Sponsored</div>
+    <script type="text/javascript">
+	atOptions = {'key' : 'REPLACE_ADSTERRA_KEY','format' : 'iframe','height' : 250,'width' : 300,'params' : {}};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/REPLACE_ADSTERRA_KEY/invoke.js"></script>
+  </div>
+
+  <!-- AD 2 -->
+  <div class="ad-box">
+    <div class="ad-label">Sponsored</div>
+    <script async src="https://YOUR_PROPELLER.js"></script>
+  </div>
+
+  <!-- AD 3 -->
+  <div class="ad-box">
+    <div class="ad-label">Sponsored</div>
+    <script async src="https://ads.hilltopads.com/script?id=REPLACE_HILLTOP_ID"></script>
+  </div>
+
+  <button class="btn" id="watchAdBtn">Watch Ads Today +1 Day</button>
+  <button class="btn" id="claimBtn">Claim 300 DCX</button>
+  <button class="btn" id="withdrawBtn">Withdraw - Last Day of Month</button>
+
+  <div class="card">
+    <div class="rules">
+      <b>How it works:</b><br>
+            1. Watch ads once every 24 hours<br>
+            2. Watch 20+ days to claim 300 DCX<br>
+            3. Claim once per month<br>
+            4. Withdraw only on last day<br>
+            5. Min withdraw: 300 DCX = $0.90
+    </div>
+  </div>
+
+  <p style="font-size:10px; color:#444; text-align:center; margin-top:20px;">© 2026 DailyCrypto. Promotional rewards. Not financial advice.</p>
+</div>
+
+<script>
+const DAILY_REWARD = 10;
+const MONTHLY_REWARD = 300;
+const DCX_PRICE = 0.003;
+let provider, signer, userAddress;
+const STORAGE_KEY = 'dcxMonthly_v2_';
+
+document.getElementById('connectBtn').onclick = async () => {
+  if(!window.ethereum) return alert('Install MetaMask or TrustWallet');
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = provider.getSigner();
+  userAddress = await signer.getAddress();
+  document.getElementById('walletAddress').innerText = userAddress.slice(0,6)+'...'+userAddress.slice(-4);
+  document.getElementById('connectBtn').innerText = 'Wallet Connected';
+  loadData();
+}
+
+function loadData() {
+  const data = JSON.parse(localStorage.getItem(STORAGE_KEY + userAddress) || '{"days":0,"claimedMonth":-1,"balance":0,"lastWatch":""}');
+  document.getElementById('days').innerText = data.days + '/30';
+  document.getElementById('balance').innerText = data.balance + ' DCX';
+  document.getElementById('usd').innerText = (data.balance * DCX_PRICE).toFixed(2);
+  const today = new Date().toISOString().slice(0,10);
+  if(data.lastWatch === today) {
+    document.getElementById('watchAdBtn').disabled = true;
+    document.getElementById('watchAdBtn').innerText = 'Come back tomorrow';
+  }
+}
+
+document.getElementById('watchAdBtn').onclick = () => {
+  const data = JSON.parse(localStorage.getItem(STORAGE_KEY + userAddress) || '{"days":0,"claimedMonth":-1,"balance":0,"lastWatch":""}');
+  const today = new Date().toISOString().slice(0,10);
+  if(!userAddress) return alert('Connect wallet first');
+  if(data.lastWatch === today) return alert('Already watched today');
+  data.days += 1; data.lastWatch = today;
+  localStorage.setItem(STORAGE_KEY + userAddress, JSON.stringify(data));
+  loadData(); alert('+1 Day!');
+}
+
+document.getElementById('claimBtn').onclick = () => {
+  const data = JSON.parse(localStorage.getItem(STORAGE_KEY + userAddress) || '{"days":0,"claimedMonth":-1,"balance":0,"lastWatch":""}');
+  const month = new Date().getMonth();
+  if(!userAddress) return alert('Connect wallet first');
+  if(data.days < 20) return alert('Watch 20 days to claim');
+  if(data.claimedMonth === month) return alert('Already claimed this month');
+  data.balance += MONTHLY_REWARD; data.claimedMonth = month; data.days = 0;
+  localStorage.setItem(STORAGE_KEY + userAddress, JSON.stringify(data));
+  loadData(); alert(`Claimed ${MONTHLY_REWARD} DCX!`);
+}
+
+document.getElementById('withdrawBtn').onclick = () => {
+  const today = new Date();
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  if(today.getDate() !== lastDay) return alert(`Withdraw only on day ${lastDay}`);
+  const data = JSON.parse(localStorage.getItem(STORAGE_KEY + userAddress) || '{"days":0,"claimedMonth":-1,"balance":0,"lastWatch":""}');
+  if(!userAddress) return alert('Connect wallet first');
+  if(data.balance < 300) return alert('Min 300 DCX');
+  alert(`Withdrawal: ${data.balance} DCX to ${userAddress}`);
+  data.balance = 0;
+  localStorage.setItem(STORAGE_KEY + userAddress, JSON.stringify(data));
+  loadData();
+}
+</script>
+</body>
+                                             </html>
